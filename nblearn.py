@@ -5,7 +5,7 @@ import os
 from os import path
 import collections
 import json
-
+import time
 class nbLearner:
 	def __init__(self):
 		self.binaryClass = ["spam","ham"]
@@ -55,10 +55,10 @@ class nbLearner:
 		self.classificationModel["totalSpamWords"]	= sum(self.spamVocab.values())
 		self.classificationModel["totalHamWords"] = sum(self.hamVocab.values())
 		self.classificationModel["vocabSize"] = self.getVocabSize()
-		for key in self.hamVocab:
-			self.hamVocab[key] /= self.classificationModel["totalHamWords"]
-		for key in self.spamVocab:
-			self.spamVocab[key] /= self.classificationModel["totalSpamWords"]
+		#for key in self.hamVocab:
+		#	self.hamVocab[key] /= self.classificationModel["totalHamWords"]
+		#for key in self.spamVocab:
+		#	self.spamVocab[key] /= self.classificationModel["totalSpamWords"]
 		self.classificationModel["hamVocab"] = self.hamVocab
 		self.classificationModel["spamVocab"] = self.spamVocab
 		#print(self.classificationModel)
@@ -71,17 +71,17 @@ class nbLearner:
 		common_elements =  len(list(filter(lambda x: x in self.hamVocab.keys(), self.spamVocab.keys())))
 		return (len(self.hamVocab.keys()) + len(self.spamVocab.keys()) - common_elements)
 
+start_time = time.time()
 parser = argparse.ArgumentParser(usage="python nblearn.py <INPUTDIR>", description="Learn a naive bayes model from labelled data")
 parser.add_argument('idir', help="inputdir help")
 args = parser.parse_args()
 
 naiveBayesLearner = nbLearner()
 naiveBayesLearner.generateClassedDataListing(args.idir)
-print(len(naiveBayesLearner.spamFileList))
-print(len(naiveBayesLearner.hamFileList))
 naiveBayesLearner.extractFeaturesforTaggedData("spam")
 naiveBayesLearner.extractFeaturesforTaggedData("ham")
 naiveBayesLearner.genClassificationModel()
+print("Took {0} seconds to execute".format(time.time()-start_time))
 #print(naiveBayesLearner.hamVocab)
 #print(sorted(naiveBayesLearner.spamVocab.keys()))
 #print(naiveBayesLearner.getVocabSize())

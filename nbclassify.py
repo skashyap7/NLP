@@ -5,6 +5,7 @@ import os
 from os import path
 import sys
 import json
+import math
 
 class nbClassify:
 	def __init__(self):
@@ -21,7 +22,7 @@ class nbClassify:
 				self.model = json.load(fhandle)
 				fhandle.close()
 				self.spamProbability = self.model["spamDocuments"]/self.model["totalDocuments"]
-				self.hamProbability = 1 - self.spamProbability
+				self.hamProbability = self.model["hamDocuments"]/self.model["totalDocuments"]
 		except FileNotFoundError:
 			print("Model file not found ! Please ensure nbmodel.txt is present")
 			sys.exit()
@@ -36,14 +37,14 @@ class nbClassify:
 	def getwordProbability(self, token, classification):
 		if classification == "spam":
 			if token in self.model["spamVocab"]:
-				return self.model["spamVocab"][token]
+				return math.log1p(self.model["spamVocab"][token]/self.model["totalSpamWords"])
 			else:
-				return 1
+				return 0
 		elif classification == "ham":
 			if token in self.model["hamVocab"]:
-				return self.model["hamVocab"][token]
+				return math.log1p(self.model["hamVocab"][token]/self.model["totalHamWords"])
 			else:
-				return 1
+				return 0
 
 	def classifyTestData(self):
 		for f in self.testdataList:
@@ -57,8 +58,8 @@ class nbClassify:
 	def classifyFile(self, filename):
 		# read a file, tokenize, calculate the probability for each class(spam/ham)
 		# choose the class which has max probability for the file
-		probabilityHam = 1
-		probabilitySpam = 1
+		probabilityHam = 0
+		probabilitySpam = 0
 		doc_classification = None
 		try:
 			with open(filename,"r",encoding="latin1") as fhandle:
@@ -69,29 +70,28 @@ class nbClassify:
 			for token in tokenizedWords:
 				#print(token)
 				temp1 = self.getwordProbability(token,"ham")
-				print(temp1)
-				probabilityHam *= temp1
+				#print(temp1)
+				probabilityHam += temp1
 				temp2 = self.getwordProbability(token,"spam")
-				probabilitySpam *= temp2
+				probabilitySpam += temp2
 				if not probabilitySpam or not probabilityHam:
 					print("Hey found both as zeros")
-					print(temp1)
-					print(temp2)
-					with open("temp.txt","w") as fh1:
-						fh1.write(token)
-						fh1.close()
-						break
-			print("--- START---")
-			print(probabilityHam)
-			print(probabilitySpam)
-			print(self.spamProbability)
-			print(self.hamProbability)
-			pS = (self.spamProbability*probabilitySpam)/(self.spamProbability*probabilitySpam + self.hamProbability*probabilityHam)
-			pH = (self.hamProbability*probabilityHam)/(self.hamProbability*probabilityHam + self.spamProbability*probabilitySpam)
+					#print(temp1)
+					#print(temp2)
+					#with open("temp.txt","w") as fh1:
+					#	fh1.write(token)
+					#	fh1.close()
+					#	break
+			#pS = (self.spamProbability*probabilitySpam)/(self.spamProbability*probabilitySpam + self.hamProbability*probabilityHam)
+			#pH = (self.hamProbability*probabilityHam)/(self.hamProbability*probabilityHam + self.spamProbability*probabilitySpam)
+			pS = math.log1p(self.spamProbability) + probabilitySpam
+			pH = math.log1p(self.hamProbability)+ probabilityHam
+			#print("Ham probability : "+str(pH))
+			#print("Spam probability : "+str(pS))
 			if pS > pH:
-				print("It is SPAM")
+				print("SPAM "+filename)
 				return "SPAM "+filename
-			print("It is HAM")
+			print("HAM "+filename)
 			return "HAM "+filename
 		except Exception as err:
 			raise Exception(err)
