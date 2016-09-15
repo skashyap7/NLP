@@ -6,30 +6,27 @@ from os import path
 import collections
 import json
 import time
+import re
+
 class nbLearner:
 	def __init__(self):
-		self.binaryClass = ["spam","ham"]
 		self.spamFileList = []
 		self.hamFileList = []
 		self.spamVocab = collections.defaultdict(int)
 		self.hamVocab = collections.defaultdict(int)
 		self.vocabSize = 0
 		self.classificationModel = {}
-	def getClassNamefromDir(self, dirname):
-		classification = dirname.split("\/|\\")[-1]
-		return classification.lower()
 
 	def generateClassedDataListing(self, dirname):
+		patternSpam = re.compile(".*.spam.txt")
 		for root, dirs, files in os.walk(dirname):
-			for subdir in dirs:
-				# get the directory name (SPAM or HAM)
-				classification = self.getClassNamefromDir(subdir)
-				for root1, subsubdirs, samplefiles in os.walk(os.path.join(root,subdir)):
-					for sfile in samplefiles:
-						if classification == "spam":
-							self.spamFileList.append(os.path.join(root1,sfile))
-						elif classification == "ham":
-							self.hamFileList.append(os.path.join(root1,sfile)) 
+			# get the directory name (SPAM or HAM)
+			for sfile in files:
+				classification = patternSpam.match(sfile)
+				if classification:
+					self.spamFileList.append(os.path.join(root,sfile))
+				else:
+					self.hamFileList.append(os.path.join(root,sfile)) 
 	
 	def extractFeaturesforTaggedData(self, classification):
 		# read each file from the processed list and extract features

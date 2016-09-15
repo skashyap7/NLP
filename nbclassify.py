@@ -6,6 +6,7 @@ from os import path
 import sys
 import json
 import math
+import re
 
 class nbClassify:
 	def __init__(self):
@@ -14,11 +15,11 @@ class nbClassify:
 		self.model = {}
 		self.spamProbability = 1
 		self.hamProbability = 1
+		self.actualHamData = []
+		self.actualSpamData = []
+		self.classifiedHamData = []
+		self.classifiedSpamData = []
 		self.classificationResult = []
-		self.spamcount = 0
-		self.hamcount = 0
-		self.spamtest = 0
-		self.hamtest = 0
 
 	def loadModel(self, filename):
 		try:
@@ -33,10 +34,9 @@ class nbClassify:
 
 	def getTestData(self, dirname):
 		for root, dirs, files in os.walk(dirname):
-			for subdir in dirs:
-				for root1, subsubdirs, samplefiles in os.walk(os.path.join(root,subdir)):
-					for sfile in samplefiles:
-						self.testdataList.append(os.path.join(root1,sfile))
+			for f in files:
+				#print(os.path.join(root,f))
+				self.testdataList.append(os.path.join(root,f))
 	
 	def getwordProbability(self, token, classification):
 		if classification == "spam":
@@ -78,23 +78,24 @@ class nbClassify:
 			#print("Ham probability : "+str(pH))
 			#print("Spam probability : "+str(pS))
 			if pS >= pH:
-				print("SPAM "+filename)
-				self.spamcount += 1
+				#print("SPAM "+filename)
+				#self.spamcount += 1
+				self.classifiedSpamData.append(filename)
 				return "SPAM "+filename
 			else:
-				print("HAM "+filename)
-				self.hamcount += 1
+				#print("HAM "+filename)
+				#self.hamcount += 1
+				self.classifiedHamData.append(filename)
 				return "HAM "+filename
 		except Exception as err:
 			raise Exception(err)
 
 	def classifyTestData(self):
+		patternSpam = re.compile(".*.spam.txt")
+		#print(len(self.testdataList))
+		self.actualSpamData = [x for x in self.testdataList if patternSpam.match(x)]
+		self.actualHamData = [x for x in self.testdataList if not patternSpam.match(x)]
 		for f in self.testdataList:
-			dirName = f.split("\\")[6]
-			if dirName == "spam":
-				self.spamtest += 1
-			elif dirName == "ham":
-				self.hamtest += 1
 			classification = self.classifyFile(f)
 			self.classificationResult.append(classification)
 		# Write the output data to a file
@@ -106,12 +107,33 @@ parser = argparse.ArgumentParser(usage="python nbclassify.py <INPUTDIR>", descri
 parser.add_argument('idir', help="inputdir help")
 args = parser.parse_args()
 
-naiveBayesClassifier = nbClassify()
-naiveBayesClassifier.loadModel("nbmodel.txt")
-naiveBayesClassifier.getTestData(args.idir)
-naiveBayesClassifier.classifyTestData()
-print("Total no. of SPAM found by classifier : {0}".format(naiveBayesClassifier.spamcount))
-print("Total no. of SPAM in test data : {0}".format(naiveBayesClassifier.spamtest))
-print("Total no. of HAM found by classifier : {0} ".format(naiveBayesClassifier.hamcount))
-print("Total no. of HAM in test data : {0}".format(naiveBayesClassifier.hamtest))
+nbc = nbClassify()
+nbc.loadModel("nbmodel.txt")
+nbc.getTestData(args.idir)
 
+nbc.classifyTestData()
+print("Total no. of SPAM found by classifier : {0}".format(len(nbc.classifiedSpamData)))
+print("Total no. of SPAM in test data : {0}".format(len(nbc.actualSpamData)))
+print("Total no. of HAM found by classifier : {0} ".format(len(nbc.classifiedHamData)))
+print("Total no. of HAM in test data : {0}".format(len(nbc.actualHamData)))
+# hams which were not classifed as hams
+nHam = len([x for x in nbc.actualHamData if x not in nbc.classifiedHamData])
+# spams not classified as spams
+nSpam = len([x for x in nbc.actualSpamData if x not in nbc.classifiedSpamData])
+print("Spams not identified as spams: "+str(nSpam))
+print("Hams not identified as hams: "+str(nHam))
+total = nbc.model["totalDocuments"]
+accuracy = (total - (nHam + nSpam))/total
+precision_spam = (len(nbc.classifiedSpamData) - nHam)/len(nbc.classifiedSpamData)
+precision_ham = (len(nbc.classifiedHamData) - nSpam)/len(nbc.classifiedHamData)
+recall_spam = (len(nbc.classifiedSpamData) - nHam)/(len(nbc.classifiedSpamData) - nHam + nSpam)
+recall_ham = (len(nbc.classifiedHamData) - nHam)/(len(nbc.classifiedHamData) - nSpam + nHam)
+fscore_spam =  2*precision_spam*recall_spam/(precision_spam+ recall_spam)
+fscore_ham =  2*precision_ham*recall_ham/(precision_ham+ recall_ham)
+print("Accuracy is : {0}".format(accuracy)) 
+print("Precision of Spam: {0}".format(precision_spam))
+print("Precision of Ham: {0}".format(precision_ham))
+print("Recall of Spam : {0}".format(recall_spam))
+print("Recall of Ham : {0}".format(recall_ham))
+print("F-Score for Spam : {0}".format(fscore_spam))
+print("F-Score for Ham : {0}".format(fscore_ham))
