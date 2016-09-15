@@ -62,29 +62,20 @@ class nbClassify:
 			with open(filename,"r",encoding="latin1") as fhandle:
 				fileContent = fhandle.read()
 				fhandle.close()
-			#print("Evaluating test file {0}".format(filename))
 			tokenizedWords = fileContent.split()
 			for token in tokenizedWords:
-				#print(token)
 				temp1 = 0
 				temp2 = 0
 				temp1 = self.getwordProbability(token,"ham")
-				#print(temp1)
 				probabilityHam += temp1
 				temp2 = self.getwordProbability(token,"spam")
 				probabilitySpam += temp2
 			pS = math.log1p(self.spamProbability) + probabilitySpam
 			pH = math.log1p(self.hamProbability) + probabilityHam
-			#print("Ham probability : "+str(pH))
-			#print("Spam probability : "+str(pS))
 			if pS >= pH:
-				#print("SPAM "+filename)
-				#self.spamcount += 1
 				self.classifiedSpamData.append(filename)
 				return "SPAM "+filename
 			else:
-				#print("HAM "+filename)
-				#self.hamcount += 1
 				self.classifiedHamData.append(filename)
 				return "HAM "+filename
 		except Exception as err:
@@ -102,38 +93,50 @@ class nbClassify:
 		with open("nboutput.txt","w") as fhandle:
 			fhandle.write("\n".join(self.classificationResult))
 			fhandle.close()
+	
+	def getStats(self):
+		print("Total no. of SPAM found by classifier : {0}".format(len(nbc.classifiedSpamData)))
+		print("Total no. of SPAM in test data : {0}".format(len(nbc.actualSpamData)))
+		print("Total no. of HAM found by classifier : {0} ".format(len(nbc.classifiedHamData)))
+		print("Total no. of HAM in test data : {0}".format(len(nbc.actualHamData)))
+		
+		# hams which were not classifed as hams
+		nHam = len([x for x in nbc.actualHamData if x not in nbc.classifiedHamData])
+		# spams not classified as spams
+		nSpam = len([x for x in nbc.actualSpamData if x not in nbc.classifiedSpamData])
+		
+		print("Spams not identified as spams: "+str(nSpam))
+		print("Hams not identified as hams: "+str(nHam))
+		
+		total = nbc.model["totalDocuments"]
+		accuracy = (total - (nHam + nSpam))/total
+		precision_spam = (len(nbc.classifiedSpamData) - nHam)/len(nbc.classifiedSpamData)
+		precision_ham = (len(nbc.classifiedHamData) - nSpam)/len(nbc.classifiedHamData)
+		recall_spam = (len(nbc.classifiedSpamData) - nHam)/(len(nbc.classifiedSpamData) - nHam + nSpam)
+		recall_ham = (len(nbc.classifiedHamData) - nHam)/(len(nbc.classifiedHamData) - nSpam + nHam)
+		fscore_spam =  2*precision_spam*recall_spam/(precision_spam+ recall_spam)
+		fscore_ham =  2*precision_ham*recall_ham/(precision_ham+ recall_ham)
+		
+		print("Accuracy is : {0}".format(accuracy)) 
+		print("Precision of Spam: {0}".format(precision_spam))
+		print("Precision of Ham: {0}".format(precision_ham))
+		print("Recall of Spam : {0}".format(recall_spam))
+		print("Recall of Ham : {0}".format(recall_ham))
+		print("F-Score for Spam : {0}".format(fscore_spam))
+		print("F-Score for Ham : {0}".format(fscore_ham))
 
 parser = argparse.ArgumentParser(usage="python nbclassify.py <INPUTDIR>", description="Classify emails as SPAM/HAM using naive bayes model learned from labelled data")
 parser.add_argument('idir', help="inputdir help")
+parser.add_argument('-m','--model', help="model file to load")
 args = parser.parse_args()
 
 nbc = nbClassify()
-nbc.loadModel("nbmodel.txt")
+if not args.model:
+	nbc.loadModel("nbmodel.txt")
+else:
+	nbc.loadModel(args.model)
 nbc.getTestData(args.idir)
-
 nbc.classifyTestData()
-print("Total no. of SPAM found by classifier : {0}".format(len(nbc.classifiedSpamData)))
-print("Total no. of SPAM in test data : {0}".format(len(nbc.actualSpamData)))
-print("Total no. of HAM found by classifier : {0} ".format(len(nbc.classifiedHamData)))
-print("Total no. of HAM in test data : {0}".format(len(nbc.actualHamData)))
-# hams which were not classifed as hams
-nHam = len([x for x in nbc.actualHamData if x not in nbc.classifiedHamData])
-# spams not classified as spams
-nSpam = len([x for x in nbc.actualSpamData if x not in nbc.classifiedSpamData])
-print("Spams not identified as spams: "+str(nSpam))
-print("Hams not identified as hams: "+str(nHam))
-total = nbc.model["totalDocuments"]
-accuracy = (total - (nHam + nSpam))/total
-precision_spam = (len(nbc.classifiedSpamData) - nHam)/len(nbc.classifiedSpamData)
-precision_ham = (len(nbc.classifiedHamData) - nSpam)/len(nbc.classifiedHamData)
-recall_spam = (len(nbc.classifiedSpamData) - nHam)/(len(nbc.classifiedSpamData) - nHam + nSpam)
-recall_ham = (len(nbc.classifiedHamData) - nHam)/(len(nbc.classifiedHamData) - nSpam + nHam)
-fscore_spam =  2*precision_spam*recall_spam/(precision_spam+ recall_spam)
-fscore_ham =  2*precision_ham*recall_ham/(precision_ham+ recall_ham)
-print("Accuracy is : {0}".format(accuracy)) 
-print("Precision of Spam: {0}".format(precision_spam))
-print("Precision of Ham: {0}".format(precision_ham))
-print("Recall of Spam : {0}".format(recall_spam))
-print("Recall of Ham : {0}".format(recall_ham))
-print("F-Score for Spam : {0}".format(fscore_spam))
-print("F-Score for Ham : {0}".format(fscore_ham))
+# Comment the below line to not print stats
+nbc.getStats()
+

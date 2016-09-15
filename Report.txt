@@ -1,0 +1,29 @@
+Assignment 1 Report
+
+Name: Suman Kashyap
+
+1. Performance on the development data with 100% of the training data
+1a. spam precision:  0.9922801213123794
+1b. spam recall: 0.9793197278911565
+1c. spam F1 score: 0.9857573267597919
+1d. ham precision:  0.9509043927648578
+1e. ham recall: 1.0133333333333334
+1f. ham F1 score: 0.9811267803269488
+
+2. Performance on the development data with 10% of the training data
+2a. spam precision: 0.9862898712926693
+2b. spam recall: 0.9591836734693877
+2c. spam F1 score: 0.9725479376465719
+2d. ham precision: 0.9063670411985019
+2e. ham recall: 1.0346435709526982 
+2f. ham F1 score: 0.9662665687954514
+
+3. Description of enhancement(s) you tried (e.g., different approach(es) to smoothing, treating common words differently, dealing with unknown words differently):
+
+4. Best performance results based on enhancements. Note that these could be the same or worse than the standard implementation.
+4a. spam precision:
+4b. spam recall: 
+4c. spam F1 score: 
+4d. ham precision:
+4e. ham recall: 
+4f. ham F1 score:
