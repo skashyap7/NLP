@@ -19,14 +19,14 @@ class nbLearner:
 		self.dataset = None
 
 	def generateClassedDataListing(self, dirname,dataset = None):
-		patternSpam = re.compile(".*.spam.txt")
+		patternSpam = re.compile("spam")
 		for root, dirs, files in os.walk(dirname):
-			# get the directory name (SPAM or HAM)
 			for sfile in files:
-				classification = patternSpam.match(sfile)
-				if classification:
+				# get the directory name (SPAM or HAM)
+				classification = root.split(os.path.sep)[-1]
+				if classification.lower() == "spam":
 					self.spamFileList.append(os.path.join(root,sfile))
-				else:
+				elif classification.lower() == "ham":
 					self.hamFileList.append(os.path.join(root,sfile)) 
 		if dataset:
 			#get certain percentage of ham/spam files only to analyze

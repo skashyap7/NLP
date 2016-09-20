@@ -2,7 +2,21 @@ Assignment 1 Report
 
 Name: Suman Kashyap
 
+To generate a model with 100% of training data. Run
+
+    nblearn.py <inputdir>
+
+The script generated a model file called nbmodel.txt. This can be used for nbclassify.py as 
+
+    nbclassify.py <inputdir> -m nbmodel.txt
+                or
+    nbclassify.py <inputdir>
+
+    If a model file is not specified, it looks for a file called nbmodel.txt
+
 1. Performance on the development data with 100% of the training data
+-----------------------------------------------------------------------
+
 1a. spam precision:  0.9922801213123794
 1b. spam recall: 0.9793197278911565
 1c. spam F1 score: 0.9857573267597919
@@ -11,6 +25,22 @@ Name: Suman Kashyap
 1f. ham F1 score: 0.9811267803269488
 
 2. Performance on the development data with 10% of the training data
+-----------------------------------------------------------------------
+
+To generate a model with 10% of training data. Run
+
+    nblearn.py <inputdir> -d 10 
+            or
+    nblearn.py <inputdir> --dataset 10
+
+In general the command can be run as nblearn.py inputdir [-d | --dataset training_data_percentage]. The command generates a new model file called nbmodel_<dataset>.txt. This can be used for nbclassify.py as 
+
+    nbclassify.py <inputdir> -m nbmodel_10.txt
+                or
+    nbclassify.py <inputdir> --model nbmodel_10.txt
+
+The results generated are as given below
+--------------------------------------------
 2a. spam precision: 0.9862898712926693
 2b. spam recall: 0.9591836734693877
 2c. spam F1 score: 0.9725479376465719
@@ -20,10 +50,34 @@ Name: Suman Kashyap
 
 3. Description of enhancement(s) you tried (e.g., different approach(es) to smoothing, treating common words differently, dealing with unknown words differently):
 
+A different script is written to achieve this called analysis.py. The script provides with two options currently
+
+    -c | --remove_common : This option removes the word that are common in the spam and ham vocabulary and occur with relatively
+                           similar frequency in both spam and ham vocabulary. The occurence relativity is decided by a threshold.
+                           By default this threshold is set to 2. This means that if a word like "hello" occurs in both spam and ham vocab, it will be removed only if the no. of occurence in one vocab is within thr threshold. i.e
+                           if "hello" occurs 5 times in ham and 3 times in spam , it will be removed but if occurs 6 times in ham, it won't be removed as threshold is set to 2
+
+    -s | --remove_stopwords: This option removes stop words from the model. Currently, it considers ",",".","\n",":" and ";" as
+                             the stop words to remove.
+
+    e.g. python analysis.py -m nbmodel.txt -c -s
+                    or 
+         python analysis.py -m nbmodel.txt -c
+                    or
+         python analysis.py -m nbmodel.txt -s
+
+    The two options are completely independent. A new model file is generated called newmodel.txt. This model can be used with
+    nbclassify.py as 
+            nbclassify.py <inputdir> --model newmodel.txt
+
+    The results based on a running "python analysis.py -m nbmodel.txt -c -s". 
+    As can be seen that the ham precision has improved considerably by removing stop words and common words that occur almost likely in spam and ham documents. The results by considering just common words didn't cause much difference , however were a slight improvement from before. Removal of stop words from the vocabulary led to greater improvement.    
+-----------------------------------------------------------------------
+
 4. Best performance results based on enhancements. Note that these could be the same or worse than the standard implementation.
-4a. spam precision:
-4b. spam recall: 
-4c. spam F1 score: 
-4d. ham precision:
-4e. ham recall: 
-4f. ham F1 score:
+4a. spam precision: 0.9914998629010146
+4b. spam recall: 0.9839455782312925
+4c. spam F1 score: 0.9877082764272057
+4d. ham precision: 0.961412688031393
+4e. ham recall: 0.9980013324450366
+4f. ham F1 score: 0.979365395631491
